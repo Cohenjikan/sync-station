@@ -1,31 +1,32 @@
 #!/bin/bash
 
 if [ "$EUID" -ne 0 ]; then
-  echo "请使用 root 权限运行此脚本: sudo bash run.sh"
+  echo "Please run this script as root"
   exit 1
 fi
 
 APP_DIR="/opt/syncstation"
 CLI_BIN="/usr/local/bin/syncstation"
+REPO_URL="https://github.com/Cohenjikan/sync-station.git"
 
-echo "更新系统依赖..."
+echo "Updating system dependencies..."
 apt-get update -y
-apt-get install -y curl sudo build-essential
+apt-get install -y curl sudo build-essential git
 
-echo "安装 Node.js 20.x (LTS)..."
+echo "Installing Node.js 20.x (LTS)..."
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 apt-get install -y nodejs
 
-echo "安装进程守护工具 PM2..."
+echo "Installing PM2..."
 npm install -g pm2
 
-echo "部署应用文件至 $APP_DIR..."
-mkdir -p $APP_DIR
-cp -r ./* $APP_DIR/
+echo "Cloning repository to $APP_DIR..."
+rm -rf $APP_DIR
+git clone $REPO_URL $APP_DIR
 cd $APP_DIR
 npm install
 
-echo "生成全局指令工具..."
+echo "Generating CLI tool..."
 cat << 'EOF' > $CLI_BIN
 #!/bin/bash
 
@@ -35,15 +36,15 @@ case "$1" in
     start)
         pm2 start $APP_DIR/server.js --name "syncstation"
         pm2 save
-        echo "Sync Station 已启动。"
+        echo "Sync Station started."
         ;;
     stop)
         pm2 stop syncstation
-        echo "Sync Station 已停止。"
+        echo "Sync Station stopped."
         ;;
     restart)
         pm2 restart syncstation
-        echo "Sync Station 已重启。"
+        echo "Sync Station restarted."
         ;;
     status)
         pm2 status syncstation
@@ -52,40 +53,40 @@ case "$1" in
         pm2 logs syncstation
         ;;
     reset)
-        echo "执行恢复出厂设置..."
+        echo "Executing factory reset..."
         pm2 stop syncstation
         rm -rf $APP_DIR/uploads/*
         pm2 restart syncstation
-        echo "已清空所有文件与文本记录，服务已重置并启动。"
+        echo "Files and records cleared. Service reset and started."
         ;;
     uninstall)
-        echo "执行深度卸载..."
+        echo "Executing deep uninstall..."
         pm2 delete syncstation
         pm2 save
         rm -rf $APP_DIR
         rm -f /usr/local/bin/syncstation
-        echo "卸载彻底完成。"
+        echo "Uninstall complete."
         ;;
     -h|help|*)
-        echo "Sync Station CLI 管理工具"
+        echo "Sync Station CLI Tool"
         echo "--------------------------"
-        echo "syncstation start     启动服务"
-        echo "syncstation stop      关闭服务"
-        echo "syncstation restart   重启服务"
-        echo "syncstation status    查看运行状态及资源占用"
-        echo "syncstation logs      查看实时运行日志"
-        echo "syncstation reset     恢复出厂设置 (清空文件、文本及修改的密码)"
-        echo "syncstation uninstall 彻底卸载服务并清理残留文件"
-        echo "syncstation -h        查看此帮助菜单"
+        echo "syncstation start     Start service"
+        echo "syncstation stop      Stop service"
+        echo "syncstation restart   Restart service"
+        echo "syncstation status    View status and resources"
+        echo "syncstation logs      View real-time logs"
+        echo "syncstation reset     Factory reset (clears files, texts, and passwords)"
+        echo "syncstation uninstall Uninstall service and clean files"
+        echo "syncstation -h        View this help menu"
         ;;
 esac
 EOF
 
 chmod +x $CLI_BIN
 
-echo "初始化并注册开机自启..."
+echo "Initializing and registering startup..."
 syncstation start
 pm2 startup | grep "sudo env" | bash
 pm2 save
 
-echo "安装部署完成。直接输入 'syncstation -h' 使用。"
+echo "Installation complete. Run 'syncstation -h' to use."
