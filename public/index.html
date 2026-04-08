@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
+    <title>Sync Station by Cohen & Louie </title>
+    <link rel="stylesheet" href="assets/fonts.css">
+    <script src="assets/tailwindcss.js"></script>
+    <script src="assets/luxon.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body { 
+            font-family: 'JetBrains Mono', monospace; 
+            background-color: #2b2d31; 
+            color: #dbdee1; 
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            width: 100vw;
+            height: 100dvh;
+            overflow: hidden;
+            overscroll-behavior: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        input, textarea, pre, .selectable {
+            -webkit-user-select: auto;
+            user-select: auto;
+        }
+
+        input, textarea, button, select {
+            font-size: 16px !important;
+        }
+
+        .bg-panel { background-color: #313338; }
+        .bg-input { background-color: #383a40; }
+        .border-line { border-color: #1e1f22; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #1e1f22; border-radius: 3px; }
+        .checkbox-custom { width: 20px; height: 20px; accent-color: #ef4444; cursor: pointer; }
+        
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .spinner { border: 2px solid transparent; border-top-color: #3b82f6; border-radius: 50%; width: 14px; height: 14px; animation: spin 0.8s linear infinite; display: inline-block; vertical-align: middle; }
+        
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
+        .shake { animation: shake 0.4s; }
+        .dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid #6b7280; transition: all 0.1s; }
+        .dot.filled { background-color: #dbdee1; border-color: #dbdee1; }
+    </style>
+</head>
+<body class="flex flex-col">
+
+    <div id="lockScreen" class="absolute inset-0 bg-[#2b2d31] z-[300] flex flex-col items-center justify-center hidden w-full h-full">
+        <h2 class="text-xl font-bold tracking-widest text-gray-300 mb-8" id="lockTitle">输入访问密码</h2>
+        <div class="flex gap-6 mb-10" id="pinDots">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+        <div class="grid grid-cols-3 gap-6">
+            <button class="w-16 h-16 rounded-full bg-panel text-2xl font-bold hover:bg-gray-600 transition active:scale-95 border border-line flex items-center justify-center" onclick="inputPin('1')">1</button>
+            <button class="w-16 h-16 rounded-full bg-panel text-2xl font-bold hover:bg-gray-600 transition active:scale-95 border border-line flex items-center justify-center" onclick="inputPin('2')">2</button>
+            <button class="w-16 h-16 rounded-full bg-panel text-2xl font-bold hover:bg-gray-600 transition active:scale-95 border border-line flex items-center justify-center" onclick="inputPin('3')">3</button>
+            <button class="w-16 h-16 rounded-full bg-panel text-2xl font-bold hover:bg-gray-600 transition active:scale-95 border border-line flex items-center justify-center" onclick="inputPin('4')">4</button>
+            <button class="w-16 h-16 rounded-full bg-panel text-2xl font-bold hover:bg-gray-600 transition active:scale-95 border border-line flex items-center justify-center" onclick="inputPin('5')">5</button>
+            <button class="w-16 h-16 rounded-full bg-panel text-2xl font-bold hover:bg-gray-600 transition active:scale-95 border border-line flex items-center justify-center" onclick="inputPin('6')">6</button>
+            <button class="w-16 h-16 rounded-full bg-panel text-2xl font-bold hover:bg-gray-600 transition active:scale-95 border border-line flex items-center justify-center" onclick="inputPin('7')">7</button>
+            <button class="w-16 h-16 rounded-full bg-panel text-2xl font-bold hover:bg-gray-600 transition active:scale-95 border border-line flex items-center justify-center" onclick="inputPin('8')">8</button>
+            <button class="w-16 h-16 rounded-full bg-panel text-2xl font-bold hover:bg-gray-600 transition active:scale-95 border border-line flex items-center justify-center" onclick="inputPin('9')">9</button>
+            <div></div>
+            <button class="w-16 h-16 rounded-full bg-panel text-2xl font-bold hover:bg-gray-600 transition active:scale-95 border border-line flex items-center justify-center" onclick="inputPin('0')">0</button>
+            <button class="w-16 h-16 rounded-full bg-panel text-xl font-bold hover:bg-gray-600 transition active:scale-95 border border-line flex items-center justify-center text-red-400" onclick="inputPin('back')">
+                <svg class="w-8 h-8 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z"></path></svg>
+            </button>
+        </div>
+    </div>
+
+    <div id="adminAuthModal" class="hidden absolute inset-0 bg-black/70 z-[150] flex items-center justify-center backdrop-blur-sm w-full h-full">
+        <div class="bg-panel p-6 rounded-lg border border-line w-80 shadow-2xl">
+            <h2 class="text-lg font-bold mb-4 text-center">需要二级权限</h2>
+            <input type="password" id="adminPassInput" class="w-full bg-input border border-line rounded p-3 text-center text-lg tracking-widest focus:outline-none focus:border-blue-500" placeholder="••••">
+            <div class="mt-4 flex justify-between gap-2">
+                <button id="cancelAdminAuthBtn" class="flex-1 bg-input hover:bg-gray-600 py-2 rounded font-bold transition">取消</button>
+                <button id="verifyAdminBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded font-bold transition">验证</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="dragOverlay" class="hidden absolute inset-0 bg-blue-500/10 border-4 border-dashed border-blue-500/80 z-[100] flex items-center justify-center pointer-events-none backdrop-blur-sm transition-all w-full h-full">
+        <span class="text-2xl font-bold text-blue-400 drop-shadow-md bg-panel/95 px-8 py-4 rounded-xl border border-blue-500/30 tracking-widest shadow-2xl">释放文件立即上传</span>
+    </div>
+
+    <div class="flex-none bg-panel border-b border-line p-3 flex justify-between items-center z-20 shadow-md safe-top">
+        <h1 class="text-lg font-bold tracking-wider text-gray-200">SYNC</h1>
+        <div class="flex gap-2 items-center">
+            <div class="hidden md:flex gap-4 text-xs font-bold mr-2">
+                <span class="text-gray-400">文本: <span id="textCount" class="text-gray-300">0/500</span></span>
+                <span class="text-gray-400">存储: <span id="storageUsage" class="text-gray-300">0 B/5 GB</span></span>
+            </div>
+            
+            <div id="navNormal" class="flex gap-2">
+                <button id="settingsBtn" class="bg-input hover:bg-gray-600 px-3 py-2 rounded font-bold transition">设置</button>
+                <button id="viewToggleBtn" class="bg-input hover:bg-gray-600 px-3 py-2 rounded font-bold transition">视图</button>
+                <button id="batchModeBtn" class="bg-red-900/40 hover:bg-red-800/60 text-red-400 px-3 py-2 rounded font-bold transition border border-red-900/50">批量</button>
+            </div>
+
+            <div id="navBatch" class="hidden flex gap-2">
+                <button id="cancelBatchBtn" class="bg-input hover:bg-gray-600 px-3 py-2 rounded font-bold transition">取消</button>
+                <button id="selectAllBtn" class="bg-input hover:bg-gray-600 px-3 py-2 rounded font-bold transition">全选</button>
+                <button id="deleteSelectedBtn" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded font-bold transition">删除 (0)</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="settingsModal" class="hidden absolute inset-0 bg-black/70 z-[150] flex items-center justify-center backdrop-blur-sm w-full h-full">
+        <div class="bg-panel p-6 rounded-lg border border-line w-80 shadow-2xl flex flex-col max-h-[90dvh]">
+            <h2 class="text-lg font-bold mb-4 flex-none border-b border-line pb-2">系统设置</h2>
+            <div class="space-y-4 overflow-y-auto flex-1 pr-2 py-2">
+                <div class="flex items-center justify-between bg-input p-3 rounded border border-line">
+                    <span class="text-sm font-bold">开启一级访问密码</span>
+                    <input type="checkbox" id="cfgAuthEnabled" class="checkbox-custom w-5 h-5">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">一级密码 (4位数字)</label>
+                    <input type="text" id="cfgPin" maxlength="4" class="w-full bg-input border border-line rounded p-2 focus:outline-none tracking-widest text-center" placeholder="0000">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">新二级密码 (管理权限)</label>
+                    <input type="text" id="cfgAdminPass" class="w-full bg-input border border-line rounded p-2 focus:outline-none" placeholder="留空则不修改">
+                </div>
+                <div class="border-t border-line my-2"></div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">最大文本记录数</label>
+                    <input type="number" id="cfgMaxTexts" class="w-full bg-input border border-line rounded p-2 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">最大文件容量 (GB)</label>
+                    <input type="number" id="cfgMaxFilesGB" class="w-full bg-input border border-line rounded p-2 focus:outline-none">
+                </div>
+            </div>
+            <div class="mt-4 flex justify-end gap-2 flex-none pt-2 border-t border-line">
+                <button id="closeSettingsBtn" class="bg-input hover:bg-gray-600 px-4 py-2 rounded transition">取消</button>
+                <button id="saveSettingsBtn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-bold transition">保存配置</button>
+            </div>
+        </div>
+    </div>
+
+    <input type="file" id="fileInput" class="hidden">
+
+    <div id="splitView" class="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
+        <div class="flex-1 flex flex-col border-b md:border-b-0 md:border-r border-line h-1/2 md:h-full bg-transparent min-h-0">
+            <div class="p-2 bg-panel text-xs text-gray-400 border-b border-line text-center flex-none">文本域</div>
+            <div id="splitMsgList" class="flex-1 overflow-y-auto p-4 space-y-4 min-h-0"></div>
+            <div class="p-3 bg-panel border-t border-line flex-none safe-bottom">
+                <textarea id="splitMsgInput" class="w-full bg-input border border-line rounded p-2 focus:outline-none resize-none h-12" placeholder="输入文本..."></textarea>
+                <button id="splitSendBtn" class="w-full mt-2 bg-gray-200 hover:bg-white text-gray-900 px-4 py-2 rounded font-bold transition">发送文本</button>
+            </div>
+        </div>
+        <div class="flex-1 flex flex-col h-1/2 md:h-full bg-transparent min-h-0">
+            <div class="p-2 bg-panel text-xs text-gray-400 border-b border-line text-center flex-none">文件域</div>
+            <div id="splitFileList" class="flex-1 overflow-y-auto p-4 space-y-3 min-h-0"></div>
+            <div class="p-3 bg-panel border-t border-line flex-none safe-bottom">
+                <button id="splitUploadBtn" class="w-full bg-input border border-line hover:bg-gray-600 px-4 py-3 rounded font-bold transition">选择文件上传</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="mergedView" class="hidden flex-1 flex-col overflow-hidden bg-transparent min-h-0">
+        <div id="chatStream" class="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth min-h-0"></div>
+        <div class="flex-none bg-panel border-t border-line p-3 z-20 safe-bottom">
+            <div class="max-w-5xl mx-auto flex items-end gap-2">
+                <button id="mergedUploadBtn" class="flex-none w-12 h-12 bg-input hover:bg-gray-600 rounded flex justify-center items-center transition">
+                    <svg class="w-6 h-6 text-gray-300 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                </button>
+                <textarea id="mergedMsgInput" class="flex-1 bg-input border border-line rounded p-3 focus:outline-none resize-none h-12 min-h-[48px] max-h-32" placeholder="输入文本..."></textarea>
+                <button id="mergedSendBtn" class="flex-none w-16 h-12 bg-gray-200 hover:bg-white text-gray-900 rounded font-bold transition">发送</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
