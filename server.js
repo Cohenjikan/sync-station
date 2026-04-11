@@ -10,7 +10,7 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
-if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR);
+fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
 const CONFIG_FILE = path.join(__dirname, 'config.json');
 
@@ -127,7 +127,12 @@ const httpAuth = (req, res, next) => {
     res.status(401).send('Unauthorized');
 };
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+    etag: false,
+    setHeaders: (res) => {
+        res.setHeader('Cache-Control', 'no-store');
+    }
+}));
 app.use(express.json());
 
 app.use('/download', httpAuth, express.static(UPLOADS_DIR));
