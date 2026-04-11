@@ -346,6 +346,14 @@ const sendText = (inputEl) => {
     inputEl.style.height = inputEl.id === 'mergedMsgInput' ? '48px' : '64px';
 };
 
+document.getElementById('refreshBtn').addEventListener('click', async () => {
+    if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+    }
+    location.reload(true);
+});
+
 els.viewToggleBtn.addEventListener('click', () => {
     isMergedMode = !isMergedMode;
     applyViewMode();
