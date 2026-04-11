@@ -7,7 +7,7 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, { transports: ['websocket'] });
 
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 fs.mkdirSync(UPLOADS_DIR, { recursive: true });
@@ -219,6 +219,13 @@ io.on('connection', (socket) => {
     socket.on('delete_text', requireAuth((id) => {
         textMessages = textMessages.filter(m => m.id !== id);
         broadcastState();
+    }));
+
+    socket.on('delete_batch_texts', requireAuth((ids) => {
+        if (Array.isArray(ids)) {
+            textMessages = textMessages.filter(m => !ids.includes(m.id));
+            broadcastState();
+        }
     }));
 
     socket.on('clear_all_texts', requireAuth(() => {

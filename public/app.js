@@ -1,4 +1,4 @@
-const socket = io();
+const socket = io({ transports: ['websocket'] });
 const DateTime = luxon.DateTime;
 
 let isMergedMode = true;
