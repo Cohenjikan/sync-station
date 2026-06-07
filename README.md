@@ -2,6 +2,8 @@
 
 <img src="docs/assets/hero.png" alt="Sync Station — 跨设备文本与文件实时同步中转站" width="100%" />
 
+<sub>▶ <a href="docs/assets/promo.mp4">观看 30 秒宣传片</a></sub>
+
 # Sync Station
 
 **你的私人剪贴板，无处不在。**

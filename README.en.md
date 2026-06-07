@@ -2,6 +2,8 @@
 
 <img src="docs/assets/hero.png" alt="Sync Station — real-time text & file sync hub across all your devices" width="100%" />
 
+<sub>▶ <a href="docs/assets/promo.mp4">Watch the 30-second promo</a></sub>
+
 # Sync Station
 
 **Your private clipboard, everywhere.**
