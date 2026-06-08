@@ -2,7 +2,7 @@
 
 <img src="docs/assets/hero.png" alt="Sync Station — real-time text & file sync hub across all your devices" width="100%" />
 
-<sub>▶ <a href="docs/assets/promo.mp4">Watch the 30-second promo</a></sub>
+<sub> <a href="docs/assets/promo.mp4">Watch the 30-second promo</a></sub>
 
 # Sync Station
 
@@ -30,7 +30,7 @@ A private, self-hosted hub that hot-syncs text and files across all your devices
 
 ---
 
-## What is this? 🛰️
+## What is this?
 
 You know the dance: copy a line of text on your phone, send it to "Saved Messages," switch to your laptop, open the chat app, copy it back out. Or email a file to yourself just to move it one room over.
 
@@ -42,59 +42,59 @@ Who it's for: people juggling a phone, laptop, work PC and home PC who are tired
 
 ---
 
-## Why use it ✨
+## Why use it
 
 | | |
 | :-- | :-- |
-| 🔒 **Truly self-hosted, single-tenant** | Your data lives on **your own VPS**, not a third-party cloud — which is the entire point versus pasting into chat apps. |
-| ⚡ **Genuine one-command bootstrap** | `lazyRun.sh` goes beyond installing the app: Node 20 + PM2 daemon, Nginx reverse proxy, Let's Encrypt SSL, optional BBR TCP tuning, iptables fix hints, and a global `syncstation` CLI. |
-| 🪟 **One dataset, two UI modes** | Split view (separate text/file panes) and a merged chat-stream view, toggled live — whichever fits the moment. |
-| 📎 **Drag-and-drop *and* clipboard-paste upload** | Send a file the fastest way available — drag it onto the window, or just `Ctrl/Cmd-V` a file straight from your clipboard. |
-| 🪶 **Tiny, easy-to-audit stack** | express + socket.io + multer. The whole server is one ~280-line file, so you can actually read what's happening. |
+| **Truly self-hosted, single-tenant** | Your data lives on **your own VPS**, not a third-party cloud — which is the entire point versus pasting into chat apps. |
+| **Genuine one-command bootstrap** | `lazyRun.sh` goes beyond installing the app: Node 20 + PM2 daemon, Nginx reverse proxy, Let's Encrypt SSL, optional BBR TCP tuning, iptables fix hints, and a global `syncstation` CLI. |
+| **One dataset, two UI modes** | Split view (separate text/file panes) and a merged chat-stream view, toggled live — whichever fits the moment. |
+| **Drag-and-drop *and* clipboard-paste upload** | Send a file the fastest way available — drag it onto the window, or just `Ctrl/Cmd-V` a file straight from your clipboard. |
+| **Tiny, easy-to-audit stack** | express + socket.io + multer. The whole server is one ~280-line file, so you can actually read what's happening. |
 
 ---
 
-## Features 🧩
+## Features
 
-### ⚡ Real-time hot sync over WebSocket
+### Real-time hot sync over WebSocket
 Paste or drop something on one device and it appears on the others without refreshing. Every server-side mutation pushes a `sync_state` event over socket.io to authed connections, and the client renders on receipt. Latency depends on the network round-trip — on a decent connection it's a **near-instant, sub-second** push.
 
 <div align="center"><img src="docs/assets/feature-1.png" alt="The real-time content stream — send on one end, it appears instantly on the others" width="85%" /></div>
 
-### 🪟 Dual UI: split view + merged chat stream
+### Dual UI: split view + merged chat stream
 Use the split view to keep text and files in separate panes when you're organizing; flip to the merged view for a single running, chat-style feed. Both render the same shared state and toggle live with one button.
 
 <div align="center"><img src="docs/assets/feature-2.png" alt="Split view next to merged chat-stream view" width="85%" /></div>
 
-### 📎 Drag-drop and clipboard-paste upload
+### Drag-drop and clipboard-paste upload
 Send a file however's fastest: drag it onto the window (a full-screen drop overlay confirms the target) or `Ctrl/Cmd-V` a file straight from your clipboard. An optimistic front-end shows the item instantly with a pending spinner, then settles once the server confirms.
 
 <div align="center"><img src="docs/assets/feature-3.png" alt="Dragging a file over the window triggers the upload overlay" width="85%" /></div>
 
-### 🗂️ Capped temp storage pool with oldest-first eviction
+### Capped temp storage pool with oldest-first eviction
 Treat it as scratch space that won't fill your disk. Files are sorted by timestamp and the oldest are pruned automatically once total size exceeds the cap. Default cap is 5GB and is admin-configurable.
 
 <div align="center"><img src="docs/assets/feature-4.png" alt="Storage usage versus cap and the settings panel" width="85%" /></div>
 
-### 🧠 Optimistic front-end with in-memory text state
+### Optimistic front-end with in-memory text state
 Sent text shows up instantly and feels snappy; text history is held in a server-side in-memory array (trimmed to a cap) rather than hammering the disk.
 
-> ⚠️ Note: **files DO live on disk** — multer writes uploads to the `uploads/` directory. Only **text history and the file index** are purely in-memory.
+> Note: **files DO live on disk** — multer writes uploads to the `uploads/` directory. Only **text history and the file index** are purely in-memory.
 
-### 💾 Config persistence to config.json
+### Config persistence to config.json
 Your PIN, admin password, and limits are written to `config.json` and reloaded on boot, so they survive restarts and updates. The CLI `update` restarts the service without wiping your config.
 
-### 🔐 Two-tier access control (4-digit PIN + admin password)
+### Two-tier access control (4-digit PIN + admin password)
 A quick lock-screen PIN gates day-to-day access and is remembered per device, while a separate admin password protects settings. **Changing the PIN kicks every device off and forces re-auth.**
 
-> ⚠️ This is a lightweight "keep casual visitors out" gate, **not strong auth**. See [Honest trade-offs](#honest-trade-offs-) below.
+> This is a lightweight "keep casual visitors out" gate, **not strong auth**. See [Honest trade-offs](#honest-trade-offs) below.
 
-### 🚀 One-line VPS deploy + management CLI
+### One-line VPS deploy + management CLI
 Go from a bare Debian/Ubuntu box to an HTTPS site with one `curl` pipe, then manage it with simple commands. `lazyRun.sh` installs Node 20, PM2, an Nginx reverse proxy and Certbot/Let's Encrypt SSL, optional BBR, and writes a global `syncstation` CLI.
 
 ---
 
-## Quickstart 🚀
+## Quickstart
 
 > Start with a clean **Debian/Ubuntu** server.
 
@@ -156,11 +156,11 @@ npm start
 | Access PIN | `0000` |
 | Admin password | `admin` |
 
-> 🚨 **Change both in the web settings panel immediately after deployment.** The defaults are public.
+> **Change both in the web settings panel immediately after deployment.** The defaults are public.
 
 ---
 
-## CLI Management 🛠️
+## CLI Management
 
 Full deployment registers a global `syncstation` command.
 
@@ -177,7 +177,7 @@ Full deployment registers a global `syncstation` command.
 
 ---
 
-## How it works ⚙️
+## How it works
 
 ```
 Device A ─┐                              ┌─ Device B
@@ -196,7 +196,7 @@ Device N ─┘             │                └─ Device N
 
 ---
 
-## Honest trade-offs ⚖️
+## Honest trade-offs
 
 This is designed as a **lightweight access gate for a private deployment**, not a zero-trust security product. Know these facts before you decide how to use it:
 
@@ -210,7 +210,7 @@ This is designed as a **lightweight access gate for a private deployment**, not 
 
 ---
 
-## Screenshots 📸
+## Screenshots
 
 | PIN lock screen | Split view | Merged chat stream |
 | :--: | :--: | :--: |
@@ -218,14 +218,14 @@ This is designed as a **lightweight access gate for a private deployment**, not 
 
 ---
 
-## Contributing 🤝
+## Contributing
 
 Issues and PRs welcome. This is a deliberately small project — please keep changes aligned with the "lightweight, easy-to-audit" spirit.
 
-## License 📄
+## License
 
 [MIT](LICENSE) © Cohen & Louie
 
 <div align="center">
-<sub>Stop emailing yourself files. ⭐ If it helps you, drop a star.</sub>
+<sub>Stop emailing yourself files. If it helps you, drop a star.</sub>
 </div>
